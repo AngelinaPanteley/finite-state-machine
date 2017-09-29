@@ -11,11 +11,10 @@ class FSM {
          this.current = this.initial;
          this.history = [this.initial];   
          this.length = 0; 
+         this.localStorage = [];
        }
-       else {
+       else 
            throw new Error();
-       }
-        
     }
          
     /**
@@ -32,16 +31,15 @@ class FSM {
      */
     changeState(state) {
         var flag = false;
-        for (let st in this.config.states){
-           if (st === state){
+        for (let st in this.config.states)
+           if (st === state) {
                this.current = state;
                this.history.push(this.current);
                flag = true;
+               this.localStorage = [];
            }
-        }
-        if (!flag){
+        if (!flag)
             throw new Error();
-        }
     }
 
     /**
@@ -50,25 +48,24 @@ class FSM {
      */
     trigger(event) {
         var flag = false;  
-        for (let st in this.config.states[this.current]){
-            for (let tr in this.config.states[this.current].transitions){
+        for (let st in this.config.states[this.current])
+            for (let tr in this.config.states[this.current].transitions)
                 if (tr === event){
                     this.current = this.config.states[this.current].transitions[tr];
                     this.history.push(this.current);
                     flag = true;
+                    this.localStorage = [];
                 }
-            }          
-        }
-        if (!flag){
+        if (!flag)
             throw new Error();
-        }
     }
 
     /**
      * Resets FSM state to initial.
      */
     reset() {
-
+        this.current = this.initial;
+        this.history.push(this.initial);
     }
 
     /**
@@ -78,7 +75,19 @@ class FSM {
      * @returns {Array}
      */
     getStates(event) {
- 
+        var mass = [];
+        if(event) {
+            for (let st in this.config.states) {
+                for (let tr in this.config.states[st].transitions) {
+                    if (tr === event)
+                        mass.push(st);
+                }
+            }
+        }
+        else
+            for (let st in this.config.states)
+                mass.push(st);
+        return mass;
     }
 
     /**
@@ -87,7 +96,12 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-
+        if (this.history.length<2) 
+            return false;
+        this.localStorage.push(this.current);
+        this.history.pop();
+        this.current = this.history[this.history.length-1];
+        return true;
     }
 
     /**
@@ -96,52 +110,22 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-
+        if (!this.localStorage.length) 
+            return false;
+        this.history.push(this.localStorage[this.localStorage.length-1]);
+        this.current=this.history[this.history.length-1];
+        this.localStorage.pop();
+        return true;
     }
 
     /**
      * Clears transition history
      */
     clearHistory() {
-
+        this.history = [this.initial];
+        this.current = this.initial;
+        this.localStorage = [];
     }
 }
 
 module.exports = FSM;
-
-/** @Created by Uladzimir Halushka **/
-/*const config = {
-    initial: 'normal',
-    states: {
-        normal: {
-            transitions: {
-                study: 'busy',
-            }
-        },
-        busy: {
-            transitions: {
-                get_tired: 'sleeping',
-                get_hungry: 'hungry',
-            }
-        },
-        hungry: {
-            transitions: {
-                eat: 'normal'
-            },
-        },
-        sleeping: {
-            transitions: {
-                get_hungry: 'hungry',
-                get_up: 'normal',
-            },
-        },
-    }
-};
-
-const student = new FSM(config);
-student.trigger('study');
-student.trigger('eat')
-student.trigger('get_tired');
-var s=student.getState()//'sleeping');
-student.trigger('get_hungry');
-s=student.getState()//).to.equal('hungry');*/
